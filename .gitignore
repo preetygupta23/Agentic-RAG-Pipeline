@@ -1,0 +1,14 @@
+# Environments
+venv/
+env/
+__pycache__/
+
+# Secrets
+.env
+
+# Data and Models
+faiss_index/
+*.csv
+*.pdf
+
+credentials.json
