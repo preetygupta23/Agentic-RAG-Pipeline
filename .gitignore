@@ -12,3 +12,6 @@ faiss_index/
 *.pdf
 
 credentials.json
+
+
+mlruns/

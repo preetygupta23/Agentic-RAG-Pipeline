@@ -1,75 +1,112 @@
 import os
+from dotenv import load_dotenv # <-- Added this!
+
+# 1. Load the API keys from your local .env file
+load_dotenv() # <-- Added this!
+
 import pandas as pd
-from dotenv import load_dotenv
+import mlflow
 from datasets import Dataset
 
+# LangChain & Groq Imports
 from langchain_groq import ChatGroq
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
+# Ragas Imports (v0.1.22)
 from ragas import evaluate
-# We use Faithfulness (Hallucination Check) and Answer Correctness (Accuracy Check)
-# Add context_precision and context_recall to this line
-from ragas.metrics import faithfulness, answer_correctness, context_precision, context_recall
+from ragas.metrics import (
+    faithfulness,
+    answer_correctness,
+    context_precision,
+    context_recall
+)
 
-load_dotenv()
+# ==========================================
+# 1. CONFIGURATION & API KEYS
+# ==========================================
+# Ensure the API key is loaded from the environment (GitHub Actions or local .env)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY environment variable not set. Please check your .env file or GitHub Secrets.")
 
+# ==========================================
+# 2. DATASET PREPARATION
+# ==========================================
+print("1. Loading Dataset & Simulating LangGraph Pipeline Output...")
 
-def run_evaluation():
-    print("1. Loading Dataset & Simulating LangGraph Pipeline Output...")
+data = {
+    "question": ["What is the primary function of the Guardrail Node?"],
+    "answer": ["The Guardrail Node intercepts prompts to prevent injections and off-topic queries."],
+    "contexts": [[
+                     "The Guardrail Node sits before retrieval. It uses low-temperature inference to block adversarial injections and off-topic requests."]],
+    "ground_truth": ["It blocks adversarial prompt injections and off-topic queries before retrieval."]
+}
 
-    data = {
-        "question": [
-            "What are the common metrics used to evaluate AI models?",
-            "What is the primary role of an AI Evaluation Engineer?",
-            "What is G-Eval?"
-        ],
-        "contexts": [
-            ["Common metrics for AI evaluation include BLEU, ROUGE, METEOR, and G-Eval."],
-            [
-                "The primary role of an AI Evaluation Engineer is to evaluate models to ensure they are fair, accurate, and unbiased."],
-            ["G-Eval is an AI evaluation metric."]
-        ],
-        "answer": [
-            "AI models are typically evaluated using metrics such as BLEU, ROUGE, METEOR, and G-Eval.",
-            "They evaluate AI models to make sure they are fair, accurate, and free of bias.",
-            "G-Eval is a framework that uses Large Language Models to evaluate AI outputs."
-        ],
-        "ground_truth": [
-            "Common metrics include BLEU, ROUGE, METEOR, and G-Eval.",
-            "An AI Evaluation Engineer evaluates models to ensure they are fair, accurate, and unbiased.",
-            "G-Eval is an AI evaluation metric."
-        ]
-    }
+# Convert to HuggingFace Dataset format (Required by RAGAS)
+hf_dataset = Dataset.from_dict(data)
 
-    df = pd.DataFrame(data)
+# ==========================================
+# 3. INITIALIZE AI JUDGES
+# ==========================================
+print("2. Initializing AI Judges (Groq 70B & HuggingFace)...")
 
-    print("2. Initializing AI Judges (Groq 70B & HuggingFace)...")
-    # Using the massive 70B model for flawless JSON grading
-    base_llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
-    base_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# The LLM Judge used to grade the answers (High reasoning capabilities required)
+base_llm = ChatGroq(
+    temperature=0,
+    model_name="llama-3.3-70b-versatile",
+    api_key=GROQ_API_KEY
+)
 
-    print("3. Running RAGAS Spectrometer... (This takes 10-20 seconds)")
-    hf_dataset = Dataset.from_pandas(df)
+# The Embeddings model used to calculate context precision/recall
+base_embeddings = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2"
+)
 
-    # Calculate Faithfulness & Answer Correctness
-    # Add the new metrics to the list
-    result = evaluate(
-        hf_dataset,
-        metrics=[faithfulness, answer_correctness, context_precision, context_recall],
-        llm=base_llm,
-        embeddings=base_embeddings
-    )
-
-    print("\n========================================")
-    print("--- PHASE 4: EVALUATION COMPLETE ---")
-    print("========================================")
-    print(result)
-
-    report_path = "final_evaluation_report.csv"
-    df_result = result.to_pandas()
-    df_result.to_csv(report_path, index=False)
-    print(f"\nDetailed metric breakdown saved to '{report_path}'")
-
-
+# ==========================================
+# 4. MLFLOW TRACKING & RAGAS EVALUATION
+# ==========================================
 if __name__ == "__main__":
-    run_evaluation()
+    print("3. Starting RAGAS Evaluation with MLflow Observability...")
+
+    # Configure MLflow to save data locally in a folder named 'mlruns'
+    mlflow.set_tracking_uri("file:./mlruns")
+    mlflow.set_experiment("Agentic_RAG_Evaluation")
+
+    # Start the tracking run
+    with mlflow.start_run(run_name="Llama3_70B_Judge_Baseline"):
+        # --- LOG INPUT PARAMETERS ---
+        mlflow.log_param("generation_model", "llama-3.1-8b-instant")
+        mlflow.log_param("judge_model", "llama-3.3-70b-versatile")
+        mlflow.log_param("embedding_model", "all-MiniLM-L6-v2")
+        mlflow.log_param("guardrail_temperature", 0.0)
+        mlflow.log_param("ragas_version", "0.1.22")
+
+        # --- RUN RAGAS SPECTROMETER ---
+        # This calculates the metrics based on the hf_dataset provided
+        result = evaluate(
+            hf_dataset,
+            metrics=[faithfulness, answer_correctness, context_precision, context_recall],
+            llm=base_llm,
+            embeddings=base_embeddings
+        )
+
+        # --- LOG OUTPUT METRICS TO MLFLOW ---
+        mlflow.log_metric("avg_faithfulness", result["faithfulness"])
+        mlflow.log_metric("avg_answer_correctness", result["answer_correctness"])
+        mlflow.log_metric("avg_context_precision", result["context_precision"])
+        mlflow.log_metric("avg_context_recall", result["context_recall"])
+
+        # --- SAVE & LOG ARTIFACTS ---
+        # Save the detailed row-by-row report locally
+        df = result.to_pandas()
+        csv_path = "final_evaluation_report.csv"
+        df.to_csv(csv_path, index=False)
+
+        # Upload the CSV into MLflow so it is attached to this specific run in the UI
+        mlflow.log_artifact(csv_path)
+
+        print("\n========================================")
+        print("--- PHASE 4: EVALUATION COMPLETE ---")
+        print("========================================")
+        print(result)
+        print(f"\nDetailed metrics logged to MLflow and saved to '{csv_path}'")
