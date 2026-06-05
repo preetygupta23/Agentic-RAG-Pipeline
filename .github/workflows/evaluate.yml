@@ -55,7 +55,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: 🟢 SUCCESS: Agentic RAG Evaluation Report
+          subject: "🟢 SUCCESS: Agentic RAG Evaluation Report"
           to: preetygupta406@gmail.com, preetygupta23@gmail.com
           from: QA Automation Pipeline
           body: |
