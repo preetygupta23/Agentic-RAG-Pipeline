@@ -23,9 +23,9 @@ jobs:
           cache: 'pip'
 
       - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
 
       - name: Run Ragas Evaluation
         env:
@@ -53,7 +53,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: 🟢 SUCCESS Agentic RAG Evaluation Report
-          to: recipient@example.com
+          to: preetygupta23@gmail.com
           from: QA Automation Pipeline
           body: |
             The Agentic RAG evaluation pipeline has completed successfully!
