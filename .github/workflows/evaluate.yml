@@ -37,41 +37,27 @@ jobs:
 
     - name: Save Evaluation Artifacts
         uses: actions/upload-artifact@v4
-        if: always() # This ensures it uploads even if the test fails!
+        if: always()
         with:
           name: rag-evaluation-results
           path: |
             final_evaluation_report.csv
             mlflow.db
 
-
-    - name: Send Evaluation Report via Email
-        uses: dawidd6/action-send-mail@v3
-        if: success()
-        with:
-          # SMTP Server Configuration (Gmail Example)
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-
-          # Credentials hidden in GitHub Secrets
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-
-          # Email Metadata
-          subject:
-            🟢 SUCCESS: Agentic RAG Evaluation Report
-          to: recipient1@example.com, recipient2@example.com
-          from: QA Automation Pipeline
-
-          # The Email Body
-          body: |
-            The Agentic RAG evaluation pipeline has completed successfully!
-
-            The Llama 70B judge has graded the latest commit.
-            Please find the detailed RAGAS metrics (Faithfulness, Answer Correctness, etc.) in the attached CSV report.
-
-            View the full run on GitHub Actions here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-          # Attach your CSV artifact directly to the email!
-          attachments: final_evaluation_report.csv
+          - name: Send Evaluation Report via Email
+            uses: dawidd6/action-send-mail@v3
+            if: success()
+            with:
+              server_address: smtp.gmail.com
+              server_port: 465
+              secure: true
+              username: ${{ secrets.MAIL_USERNAME }}
+              password: ${{ secrets.MAIL_PASSWORD }}
+              subject:
+                🟢 SUCCESS: Agentic RAG Evaluation Report
+              to: recipient1@example.com, recipient2@example.com
+              from: QA Automation Pipeline
+              body: |
+                The Agentic RAG evaluation pipeline has completed successfully!
+                View the full run on GitHub Actions here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              attachments: final_evaluation_report.csv
