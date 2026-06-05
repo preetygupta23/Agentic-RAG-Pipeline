@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/Preety Gupta.LAPTOP-LNL6M0AQ/PycharmProjects/MtechDissertation/mlruns/610452064103667851/bbc4c4009e2a483392c8d537eed02d80/artifacts
+end_time: 1778836313970
+entry_point_name: ''
+experiment_id: '610452064103667851'
+lifecycle_stage: active
+run_id: bbc4c4009e2a483392c8d537eed02d80
+run_name: Llama3_70B_Judge_Baseline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778836300379
+status: 3
+tags: []
+user_id: Preety Gupta

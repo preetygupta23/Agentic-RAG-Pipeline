@@ -5,7 +5,6 @@ import pandas as pd
 def generate_golden_dataset():
     print("Writing 20-question robust evaluation dataset...")
 
-    # Define the curated golden dataset directly
     data = {
         "question": [
             "What is the core architecture discussed in this dissertation?",
@@ -53,14 +52,17 @@ def generate_golden_dataset():
         ]
     }
 
-    # Convert to DataFrame
     df = pd.DataFrame(data)
 
-    # Save the output directly to the root directory
-    output_path = "golden_dataset.csv"
+    # Get the exact directory where this script is saved (src/eval)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Direct the output file to save in this exact folder
+    output_path = os.path.join(script_dir, "golden_dataset.csv")
+
     df.to_csv(output_path, index=False)
 
-    print(f"✅ Success! Golden dataset generated and saved to: {output_path}")
+    print(f"✅ Success! Golden dataset saved inside src/eval/: {output_path}")
     print(f"📊 Total rows written: {len(df)}")
 
 

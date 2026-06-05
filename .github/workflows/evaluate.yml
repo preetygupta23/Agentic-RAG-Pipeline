@@ -27,15 +27,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Ragas Spectrometer Evaluation
+      - name: Run Ragas Evaluation
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          # Run the evaluation script
+          # Execute the evaluation script
           python src/eval/evaluate_rag.py
-
-          # Display the output CSV in the GitHub Actions terminal logs
-          cat final_evaluation_report.csv
 
       - name: Save Evaluation Artifacts
         uses: actions/upload-artifact@v4
@@ -43,7 +40,7 @@ jobs:
         with:
           name: rag-evaluation-results
           path: |
-            final_evaluation_report.csv
+            evaluation_report.csv
             mlflow.db
 
       - name: Send Evaluation Report via Email
@@ -55,10 +52,10 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "🟢 SUCCESS: Agentic RAG Evaluation Report"
-          to: preetygupta406@gmail.com, preetygupta23@gmail.com
+          subject: 🟢 SUCCESS Agentic RAG Evaluation Report
+          to: recipient@example.com
           from: QA Automation Pipeline
           body: |
             The Agentic RAG evaluation pipeline has completed successfully!
             View the full run on GitHub Actions here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          attachments: final_evaluation_report.csv
+          attachments: evaluation_report.csv
