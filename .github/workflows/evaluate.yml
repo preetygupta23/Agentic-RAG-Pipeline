@@ -1,41 +1,43 @@
-name: Automated RAGAS Evaluation
+name: Agentic RAG Evaluation Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   evaluate-rag:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-        cache: 'pip' # Speeds up installations
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Run Ragas Spectrometer Evaluation
-      env:
-        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      run: |
-        # Run the evaluation script
-        python src/eval/evaluate_rag.py
-        
-        # Display the output CSV in the GitHub Actions terminal logs
-        cat final_evaluation_report.csv
+      - name: Run Ragas Spectrometer Evaluation
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          # Run the evaluation script
+          python src/eval/evaluate_rag.py
 
-    - name: Save Evaluation Artifacts
+          # Display the output CSV in the GitHub Actions terminal logs
+          cat final_evaluation_report.csv
+
+      - name: Save Evaluation Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -44,20 +46,19 @@ jobs:
             final_evaluation_report.csv
             mlflow.db
 
-          - name: Send Evaluation Report via Email
-            uses: dawidd6/action-send-mail@v3
-            if: success()
-            with:
-              server_address: smtp.gmail.com
-              server_port: 465
-              secure: true
-              username: ${{ secrets.MAIL_USERNAME }}
-              password: ${{ secrets.MAIL_PASSWORD }}
-              subject:
-                🟢 SUCCESS: Agentic RAG Evaluation Report
-              to: recipient1@example.com, recipient2@example.com
-              from: QA Automation Pipeline
-              body: |
-                The Agentic RAG evaluation pipeline has completed successfully!
-                View the full run on GitHub Actions here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-              attachments: final_evaluation_report.csv
+      - name: Send Evaluation Report via Email
+        uses: dawidd6/action-send-mail@v3
+        if: success()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: 🟢 SUCCESS: Agentic RAG Evaluation Report
+          to: preetygupta406@gmail.com, preetygupta23@gmail.com
+          from: QA Automation Pipeline
+          body: |
+            The Agentic RAG evaluation pipeline has completed successfully!
+            View the full run on GitHub Actions here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: final_evaluation_report.csv
