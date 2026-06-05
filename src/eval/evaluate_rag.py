@@ -5,19 +5,20 @@ import mlflow
 from datasets import Dataset
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_correctness
-from ragas.llms import LangchainLLMWrapper  # <--- IMPORTANT BRIDGE
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 
 load_dotenv()
 
 
 def run_evaluation():
-    print("🚀 Starting Agentic RAG Evaluation Pipeline...")
+    print("🚀 Starting Agentic RAG Evaluation Pipeline (Groq + Local Embeddings)...")
 
     # 1. Cleanup old DB
-    db_path = "mlflow.db"
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    if os.path.exists("mlflow.db"):
+        os.remove("mlflow.db")
 
     # 2. Path mapping
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,26 +26,35 @@ def run_evaluation():
     df = pd.read_csv(dataset_path)
 
     # 3. Simulate LangGraph
-    generated_answers = [f"Answer for {q}" for q in df['question']]
-    retrieved_contexts = [["Context A", "Context B"] for _ in df['question']]
-    df['answer'] = generated_answers
-    df['contexts'] = retrieved_contexts
+    df['answer'] = [f"Answer for {q}" for q in df['question']]
+    df['contexts'] = [["Context A", "Context B"] for _ in df['question']]
     ragas_dataset = Dataset.from_pandas(df)
 
-    # 4. BRIDGE: Wrap the Groq LLM for Ragas compatibility
-    print("⚖️ Initializing Llama 3.3 70B via Ragas Wrapper...")
+    # 4. BRIDGE: Groq for LLM, HuggingFace for Embeddings
+    print("⚖️ Initializing Llama 3.3 70B (Groq) and Local Embeddings...")
     groq_llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
-    ragas_llm = LangchainLLMWrapper(groq_llm)  # This adds set_run_config
+    ragas_llm = LangchainLLMWrapper(groq_llm)
 
+    # Use local HuggingFace embeddings to avoid OpenAI dependency
+    hf_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    ragas_embeddings = LangchainEmbeddingsWrapper(hf_embeddings)
+
+    # Assign to metrics
     faithfulness.llm = ragas_llm
+    faithfulness.embeddings = ragas_embeddings
+
     answer_correctness.llm = ragas_llm
+    answer_correctness.embeddings = ragas_embeddings
 
     # 5. MLflow & Evaluate
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment("Agentic_RAG_Evaluation")
 
     with mlflow.start_run():
-        result = evaluate(dataset=ragas_dataset, metrics=[faithfulness, answer_correctness])
+        result = evaluate(
+            dataset=ragas_dataset,
+            metrics=[faithfulness, answer_correctness]
+        )
         result_df = result.to_pandas()
 
         mlflow.log_metric("mean_faithfulness", result_df['faithfulness'].mean())
