@@ -69,7 +69,7 @@ if __name__ == "__main__":
     print("3. Starting RAGAS Evaluation with MLflow Observability...")
 
     # Configure MLflow to save data locally in a folder named 'mlruns'
-    mlflow.set_tracking_uri("file:./mlruns")
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment("Agentic_RAG_Evaluation")
 
     # Start the tracking run
