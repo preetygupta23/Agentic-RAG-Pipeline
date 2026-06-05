@@ -1,0 +1,21 @@
+question,ground_truth
+What is the core architecture discussed in this dissertation?,An automated evaluation pipeline for an Agentic RAG system.
+Which framework is used to orchestrate the agentic workflow?,LangGraph and LangChain.
+Which model is utilized as the LLM-as-a-Judge for evaluation?,Llama 3.3 70B via the Groq API.
+Which model is used as the primary generator in the RAG system?,Llama 3.1 8B.
+What embedding model is used for document vectorization?,HuggingFace all-MiniLM-L6-v2.
+Which vector database is implemented for semantic retrieval?,FAISS (Facebook AI Similarity Search).
+What primary framework is used to mathematically calculate hallucination metrics?,RAGAS (Retrieval Augmented Generation Assessment).
+Which Ragas metric evaluates if the generated answer is derived entirely from the retrieved context?,Faithfulness.
+Which Ragas metric measures the accuracy of the generated answer against the ground truth?,Answer Correctness.
+What tool is integrated for experiment tracking and observability?,MLflow.
+What backend database format was configured for MLflow tracking in the CI/CD pipeline?,A local SQLite database.
+What platform is used to automate the evaluation pipeline on every code push?,GitHub Actions.
+Which Python library is used to read and manipulate the evaluation dataset?,Pandas.
+What format must the data be converted to before passing it into Ragas?,HuggingFace Dataset format.
+Why was the Groq API selected for model inference?,To ensure ultra-low latency token generation.
+Which Python library is utilized for programmatic API endpoint validation?,The Python requests library.
+How does the LangGraph agent differ from a standard RAG chatbot?,"It uses stateful, controllable agent workflows rather than unpredictable linear generation."
+How are the final evaluation reports preserved after a GitHub Actions run completes?,Using GitHub Artifacts.
+How are stakeholders notified of a successful pipeline run?,An automated email containing the CSV report is sent via a GitHub Actions SMTP step.
+What is the primary language used for the entire Agentic RAG and evaluation stack?,Python.
