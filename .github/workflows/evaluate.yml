@@ -53,7 +53,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: 🟢 SUCCESS Agentic RAG Evaluation Report
-          to: preetygupta23@gmail.com
+          to: preetygupta23@gmail.com preetygupta406@gmail.com
           from: QA Automation Pipeline
           body: |
             The Agentic RAG evaluation pipeline has completed successfully!
